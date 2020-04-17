@@ -31,13 +31,23 @@ void AGoKart::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	FVector Force = GetActorForwardVector() * MaxDrivingForce * Throttle;
+	
+	Force += GetResistance();
+	
 	FVector Acceleration = Force / Mass;
 
 	Velocity = Velocity + Acceleration * DeltaTime;
 
 	ApplyRotation(DeltaTime);
 
+	// Moving The Car
 	UpdateLocationFromVelocity(DeltaTime);
+}
+
+FVector AGoKart::GetResistance()
+{
+
+	return -Velocity.GetSafeNormal() * Velocity.SizeSquared() * DragCoefficient;
 }
 
 void AGoKart::ApplyRotation(float DeltaTime)
@@ -58,6 +68,7 @@ void AGoKart::UpdateLocationFromVelocity(float DeltaTime)
 
 	AddActorWorldOffset(Translation, true, &HitResult);
 
+	UE_LOG(LogTemp, Warning, TEXT("Sped : %f"), Translation.Size())
 	if (HitResult.IsValidBlockingHit())
 	{
 		Velocity = FVector::ZeroVector;
