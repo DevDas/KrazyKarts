@@ -37,13 +37,16 @@ private:
 
 	FVector Velocity;
 
+	void MoveForward(float Value);
+	void MoveRight(float Value);
+
 	UFUNCTION(Server, Reliable, WithValidation)
-	void Server_MoveForward(float Value); // Now This Gonna Be Executed On Server
+	void Server_MoveForward(float Value); // Now This Gonna Be Executed On Server not On Client
 
 	bool Server_MoveForward_Validate(float Value);
 
 	UFUNCTION(Server, Reliable, WithValidation)
-	void Server_MoveRight(float Value);
+	void Server_MoveRight(float Value); // Now This Gonna Be Executed On Server not On Client
 
 	bool Server_MoveRight_Validate(float Value);
 
