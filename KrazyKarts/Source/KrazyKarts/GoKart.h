@@ -37,9 +37,15 @@ private:
 
 	FVector Velocity;
 
-	void MoveForward(float Value);
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_MoveForward(float Value); // Now This Gonna Be Executed On Server
 
-	void MoveRight(float Value);
+	bool Server_MoveForward_Validate(float Value);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_MoveRight(float Value);
+
+	bool Server_MoveRight_Validate(float Value);
 
 	// The Mass Of The Car(kg)
 	UPROPERTY(EditAnywhere)
