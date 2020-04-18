@@ -45,9 +45,9 @@ private:
 	UPROPERTY(EditAnywhere)
 	float Mass = 1000;
 
-	// Number Of Fegrees Rotated Per Second at full Control Throw (degrees/s)
+	// Min Radius of the car Turning Circle at full lock(m)
 	UPROPERTY(EditAnywhere)
-	float MaxDegreesPerSecond = 90;
+	float MinTurningRadius = 10;
 
 	// Higher Means More Drag
 	UPROPERTY(EditAnywhere)
