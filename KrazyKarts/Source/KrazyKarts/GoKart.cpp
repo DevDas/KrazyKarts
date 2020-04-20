@@ -4,18 +4,30 @@
 #include "Components/InputComponent.h"
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 AGoKart::AGoKart()
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	bReplicates = true;
 }
 
 // Called when the game starts or when spawned
 void AGoKart::BeginPlay()
 {
 	Super::BeginPlay();
+}
+
+void AGoKart::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	// This Macro Is Registering the Variable "ReplicatedLocation" & "ReplicatedRotation"
+	DOREPLIFETIME(AGoKart, ReplicatedLocation);
+	DOREPLIFETIME(AGoKart, ReplicatedRotation);
 }
 
 FString GetEnumText(ENetRole Role)
@@ -61,6 +73,18 @@ void AGoKart::Tick(float DeltaTime)
 	// Moving The Car
 	UpdateLocationFromVelocity(DeltaTime);
 
+	// Getting, Getting, Getting When Fails Setting The Last Location
+	if (HasAuthority())
+	{
+		ReplicatedLocation = GetActorLocation();
+		ReplicatedRotation = GetActorRotation();
+	}
+	else
+	{
+		SetActorLocation(ReplicatedLocation);
+		SetActorRotation(ReplicatedRotation);
+	}
+
 	DrawDebugString(GetWorld(), FVector(0, 0, 100), GetEnumText(Role), this, FColor::Red, DeltaTime);
 }
 
@@ -89,7 +113,7 @@ void AGoKart::ApplyRotation(float DeltaTime)
 
 void AGoKart::UpdateLocationFromVelocity(float DeltaTime)
 {
-	FVector Translation = Velocity * 100 * DeltaTime; // m/s * s = m // 100 Because Meters to Centimeters
+	FVector Translation = Velocity * 100 * DeltaTime; // m/s * s = m // 100  Because Meters to Centimeters
 
 	FHitResult HitResult;
 

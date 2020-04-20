@@ -37,16 +37,27 @@ private:
 
 	FVector Velocity;
 
+	// Just Variable For GetLifetimeReplicatedProps
+	UPROPERTY(Replicated)
+	FVector ReplicatedLocation;
+
+	UPROPERTY(Replicated)
+	FRotator ReplicatedRotation;
+
+	void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const;
+
 	void MoveForward(float Value);
 	void MoveRight(float Value);
 
+	// Now This Gonna Be Executed On Server not On Client
 	UFUNCTION(Server, Reliable, WithValidation)
-	void Server_MoveForward(float Value); // Now This Gonna Be Executed On Server not On Client
+	void Server_MoveForward(float Value); 
 
 	bool Server_MoveForward_Validate(float Value);
 
+	// Now This Gonna Be Executed On Server not On Client
 	UFUNCTION(Server, Reliable, WithValidation)
-	void Server_MoveRight(float Value); // Now This Gonna Be Executed On Server not On Client
+	void Server_MoveRight(float Value); 
 
 	bool Server_MoveRight_Validate(float Value);
 
