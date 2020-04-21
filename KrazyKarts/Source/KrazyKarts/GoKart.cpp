@@ -47,8 +47,11 @@ void AGoKart::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetim
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	// This Macro Is Registering the Variable "ReplicatedTransform" & "ReplicatedRotation"
+	// This Macro Is Registering the Variable "ReplicatedTransform"
 	DOREPLIFETIME(AGoKart, ReplicatedTransform);
+	DOREPLIFETIME(AGoKart, Velocity);
+	DOREPLIFETIME(AGoKart, Throttle);
+	DOREPLIFETIME(AGoKart, SteeringThrow);
 }
 
 // Called to bind functionality to input
@@ -69,7 +72,7 @@ void AGoKart::Tick(float DeltaTime)
 	Force += GetAirResistance();
 	Force += GetRollingResistance();
 	FVector Acceleration = Force / Mass;
-
+	
 	Velocity = Velocity + Acceleration * DeltaTime;
 
 	ApplyRotation(DeltaTime);
@@ -86,7 +89,7 @@ void AGoKart::Tick(float DeltaTime)
 	DrawDebugString(GetWorld(), FVector(0, 0, 100), GetEnumText(Role), this, FColor::Red, DeltaTime);
 }
 
-// When HasAuthority Fails Setting The Last Transform
+// When HasAuthority Fails, Setting The Last Transform of Client
 void AGoKart::OnRep_ReplicatedTransform()
 {
 	SetActorTransform(ReplicatedTransform); 
@@ -123,7 +126,7 @@ void AGoKart::UpdateLocationFromVelocity(float DeltaTime)
 
 	AddActorWorldOffset(Translation, true, &HitResult);
 
-	//UE_LOG(LogTemp, Warning, TEXT("Sped : %f"), Translation.Size())
+	UE_LOG(LogTemp, Warning, TEXT("Sped : %f"), Translation.Size())
 	if (HitResult.IsValidBlockingHit())
 	{
 		Velocity = FVector::ZeroVector;

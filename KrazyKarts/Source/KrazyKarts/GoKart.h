@@ -35,6 +35,8 @@ private:
 
 	void UpdateLocationFromVelocity(float DeltaTime);
 
+	// Now Velocity Will Replicate
+	UPROPERTY(Replicated)
 	FVector Velocity;
 
 	//=========================================================================================
@@ -79,8 +81,12 @@ private:
 	UPROPERTY(EditAnywhere)
 	float RollingCoefficient = 0.015;
 
+	// Now Throttle Will Replicate
+	UPROPERTY(Replicated)
 	float Throttle;
 
+	// Now SteeringThrow Will Replicate
+	UPROPERTY(Replicated)
 	float SteeringThrow;
 
 	// The Force Applied To The Car When The Throttle is Fully Down (Newton)
