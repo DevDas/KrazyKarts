@@ -6,30 +6,6 @@
 #include "DrawDebugHelpers.h"
 #include "Net/UnrealNetwork.h"
 
-// Sets default values
-AGoKart::AGoKart()
-{
- 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
-
-	bReplicates = true;
-}
-
-// Called when the game starts or when spawned
-void AGoKart::BeginPlay()
-{
-	Super::BeginPlay();
-}
-
-void AGoKart::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	// This Macro Is Registering the Variable "ReplicatedLocation" & "ReplicatedRotation"
-	DOREPLIFETIME(AGoKart, ReplicatedLocation);
-	DOREPLIFETIME(AGoKart, ReplicatedRotation);
-}
-
 FString GetEnumText(ENetRole Role)
 {
 	switch (Role)
@@ -45,6 +21,34 @@ FString GetEnumText(ENetRole Role)
 	default:
 		return "Error";
 	}
+}
+
+// Sets default values
+AGoKart::AGoKart()
+{
+ 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	PrimaryActorTick.bCanEverTick = true;
+
+	bReplicates = true;
+}
+
+// Called when the game starts or when spawned
+void AGoKart::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (HasAuthority())
+	{
+		NetUpdateFrequency = 1.f;
+	}
+}
+
+void AGoKart::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	// This Macro Is Registering the Variable "ReplicatedTransform" & "ReplicatedRotation"
+	DOREPLIFETIME(AGoKart, ReplicatedTransform);
 }
 
 // Called to bind functionality to input
@@ -76,16 +80,16 @@ void AGoKart::Tick(float DeltaTime)
 	// Getting, Getting, Getting When Fails Setting The Last Location
 	if (HasAuthority())
 	{
-		ReplicatedLocation = GetActorLocation();
-		ReplicatedRotation = GetActorRotation();
+		ReplicatedTransform = GetActorTransform();
 	}
-	else
-	{
-		SetActorLocation(ReplicatedLocation);
-		SetActorRotation(ReplicatedRotation);
-	}
-
+	
 	DrawDebugString(GetWorld(), FVector(0, 0, 100), GetEnumText(Role), this, FColor::Red, DeltaTime);
+}
+
+// When HasAuthority Fails Setting The Last Transform
+void AGoKart::OnRep_ReplicatedTransform()
+{
+	SetActorTransform(ReplicatedTransform); 
 }
 
 FVector AGoKart::GetAirResistance()
@@ -113,13 +117,13 @@ void AGoKart::ApplyRotation(float DeltaTime)
 
 void AGoKart::UpdateLocationFromVelocity(float DeltaTime)
 {
-	FVector Translation = Velocity * 100 * DeltaTime; // m/s * s = m // 100  Because Meters to Centimeters
+	FVector Translation = Velocity * 100 * DeltaTime;  // m/s * s = m // 100  Because Meters to Centimeters
 
 	FHitResult HitResult;
 
 	AddActorWorldOffset(Translation, true, &HitResult);
 
-	UE_LOG(LogTemp, Warning, TEXT("Sped : %f"), Translation.Size())
+	//UE_LOG(LogTemp, Warning, TEXT("Sped : %f"), Translation.Size())
 	if (HitResult.IsValidBlockingHit())
 	{
 		Velocity = FVector::ZeroVector;
@@ -155,5 +159,5 @@ void AGoKart::Server_MoveRight_Implementation(float Value)
 
 bool AGoKart::Server_MoveRight_Validate(float Value)
 {
-	return FMath::Abs(Value) <= 1;
+	return FMath::Abs(Value) <= 1; // if False Client Will Remove From The Server
 }

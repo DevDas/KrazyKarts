@@ -37,12 +37,13 @@ private:
 
 	FVector Velocity;
 
+	//=========================================================================================
 	// Just Variable For GetLifetimeReplicatedProps
-	UPROPERTY(Replicated)
-	FVector ReplicatedLocation;
+	UPROPERTY(ReplicatedUsing = OnRep_ReplicatedTransform)
+	FTransform ReplicatedTransform;
 
-	UPROPERTY(Replicated)
-	FRotator ReplicatedRotation;
+	UFUNCTION()
+	void OnRep_ReplicatedTransform();
 
 	void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const;
 
@@ -60,6 +61,7 @@ private:
 	void Server_MoveRight(float Value); 
 
 	bool Server_MoveRight_Validate(float Value);
+	//==========================================================================================
 
 	// The Mass Of The Car(kg)
 	UPROPERTY(EditAnywhere)
