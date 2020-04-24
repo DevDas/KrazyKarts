@@ -48,8 +48,8 @@ void AGoKart::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetim
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	// This Macro Is Registering the Variable "ReplicatedTransform"
-	DOREPLIFETIME(AGoKart, ReplicatedTransform);
-	DOREPLIFETIME(AGoKart, Velocity);
+	
+	DOREPLIFETIME(AGoKart, ServerState); // ServerState Included Valocity And Transform
 	DOREPLIFETIME(AGoKart, Throttle);
 	DOREPLIFETIME(AGoKart, SteeringThrow);
 }
@@ -68,6 +68,16 @@ void AGoKart::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (IsLocallyControlled())
+	{
+		FGoKartMoves Move;
+		Move.DeltaTime = DeltaTime;
+		Move.SteeringThrow = SteeringThrow;
+		Move.Throttle = Throttle;
+		// TODO Set Time --- Move.Time = 
+		Server_SendMove(Move);
+	}
+
 	FVector Force = GetActorForwardVector() * MaxDrivingForce * Throttle;
 	Force += GetAirResistance();
 	Force += GetRollingResistance();
@@ -83,21 +93,24 @@ void AGoKart::Tick(float DeltaTime)
 	// Getting, Getting, Getting When Fails Setting The Last Location
 	if (HasAuthority())
 	{
-		ReplicatedTransform = GetActorTransform();
+		ServerState.Transform = GetActorTransform();
+		ServerState.Velocity = Velocity; // Local Velocity Is Now ServerState Velocity
+		// TODO : Update Last Move
 	}
 	
 	DrawDebugString(GetWorld(), FVector(0, 0, 100), GetEnumText(Role), this, FColor::Red, DeltaTime);
 }
 
 // When HasAuthority Fails, Setting The Last Transform of Client
-void AGoKart::OnRep_ReplicatedTransform()
+void AGoKart::OnRep_ServerState()
 {
-	SetActorTransform(ReplicatedTransform); 
+	SetActorTransform(ServerState.Transform);
+	Velocity = ServerState.Velocity;
 }
 
 FVector AGoKart::GetAirResistance()
 {
-	return - Velocity.GetSafeNormal() * Velocity.SizeSquared() * DragCoefficient;
+	return -Velocity.GetSafeNormal() * Velocity.SizeSquared() * DragCoefficient;
 }
 
 FVector AGoKart::GetRollingResistance() 
@@ -120,7 +133,7 @@ void AGoKart::ApplyRotation(float DeltaTime)
 
 void AGoKart::UpdateLocationFromVelocity(float DeltaTime)
 {
-	FVector Translation = Velocity * 100 * DeltaTime;  // m/s * s = m // 100  Because Meters to Centimeters
+	FVector Translation = Velocity * 100 * DeltaTime; // m/s * s = m // 100  Because Meters to Centimeters
 
 	FHitResult HitResult;
 
@@ -136,31 +149,21 @@ void AGoKart::UpdateLocationFromVelocity(float DeltaTime)
 void AGoKart::MoveForward(float Value)
 {
 	Throttle = Value;
-	Server_MoveForward(Value);
 }
 
 void AGoKart::MoveRight(float Value)
 {
 	SteeringThrow = Value;
-	Server_MoveRight(Value);
 }
 
-void AGoKart::Server_MoveForward_Implementation(float Value)
+void AGoKart::Server_SendMove_Implementation(FGoKartMoves Move)
 {
-	Throttle = Value;
+	Throttle = Move.Throttle;
+	SteeringThrow = Move.SteeringThrow;
 }
 
-bool AGoKart::Server_MoveForward_Validate(float Value)
+bool AGoKart::Server_SendMove_Validate(FGoKartMoves Move)
 {
-	return FMath::Abs(Value) <= 1; // if False Client Will Remove From The Server
-}
-
-void AGoKart::Server_MoveRight_Implementation(float Value)
-{
-	SteeringThrow = Value;
-}
-
-bool AGoKart::Server_MoveRight_Validate(float Value)
-{
-	return FMath::Abs(Value) <= 1; // if False Client Will Remove From The Server
+	//return FMath::Abs(Value) <= 1; // if False Client Will Remove From The Server
+	return true; // TODO Better validation
 }

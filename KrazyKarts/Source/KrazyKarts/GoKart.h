@@ -67,34 +67,27 @@ private:
 
 	void UpdateLocationFromVelocity(float DeltaTime);
 
-	// Now Velocity Will Replicate
-	UPROPERTY(Replicated)
-	FVector Velocity;
-
 	//=========================================================================================
-	// Just Variable For GetLifetimeReplicatedProps
-	UPROPERTY(ReplicatedUsing = OnRep_ReplicatedTransform)
-	FTransform ReplicatedTransform;
+
+	// All Properties Inside The Struct Are Now Replicated
+	UPROPERTY(ReplicatedUsing = OnRep_ServerState)
+	FGoKartState ServerState;
 
 	UFUNCTION()
-	void OnRep_ReplicatedTransform();
+	void OnRep_ServerState();
 
 	void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const;
 
 	void MoveForward(float Value);
 	void MoveRight(float Value);
 
-	// Now This Gonna Be Executed On Server not On Client
+	// RPC - Anything Client Can Do Server Is Watching
+	// Now This Gonna Be Executed On Server not On Client ***RPC***
 	UFUNCTION(Server, Reliable, WithValidation)
-	void Server_MoveForward(float Value); 
+	void Server_SendMove(FGoKartMoves Move);
 
-	bool Server_MoveForward_Validate(float Value);
+	bool Server_SendMove_Validate(FGoKartMoves Move);
 
-	// Now This Gonna Be Executed On Server not On Client
-	UFUNCTION(Server, Reliable, WithValidation)
-	void Server_MoveRight(float Value); 
-
-	bool Server_MoveRight_Validate(float Value);
 	//==========================================================================================
 
 	// The Mass Of The Car(kg)
@@ -112,6 +105,9 @@ private:
 	// Higher Means More Rolling Resistance
 	UPROPERTY(EditAnywhere)
 	float RollingCoefficient = 0.015;
+
+	// Local Velocity
+	FVector Velocity;
 
 	// Now Throttle Will Replicate
 	UPROPERTY(Replicated)
