@@ -59,11 +59,13 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 private:
+	void SimulateMove(FGoKartMoves Move);
+
 	FVector GetAirResistance();
 
 	FVector GetRollingResistance();
 
-	void ApplyRotation(float DeltaTime);
+	void ApplyRotation(float DeltaTime, float SteeringToThrow);
 
 	void UpdateLocationFromVelocity(float DeltaTime);
 
@@ -109,12 +111,7 @@ private:
 	// Local Velocity
 	FVector Velocity;
 
-	// Now Throttle Will Replicate
-	UPROPERTY(Replicated)
 	float Throttle;
-
-	// Now SteeringThrow Will Replicate
-	UPROPERTY(Replicated)
 	float SteeringThrow;
 
 	// The Force Applied To The Car When The Throttle is Fully Down (Newton)
