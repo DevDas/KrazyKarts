@@ -5,6 +5,7 @@
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
 #include "Net/UnrealNetwork.h"
+#include "GameFramework/GameStateBase.h"
 
 FString GetEnumText(ENetRole Role)
 {
@@ -66,11 +67,15 @@ void AGoKart::Tick(float DeltaTime)
 
 	if (IsLocallyControlled())
 	{
-		FGoKartMoves Move;
-		Move.DeltaTime = DeltaTime;
-		Move.SteeringThrow = SteeringThrow;
-		Move.Throttle = Throttle;
-		// TODO Set Time 
+		FGoKartMoves Move = CreateMove(DeltaTime);
+
+		if (!HasAuthority())
+		{
+			UnacknowledgedMoves.Add(Move);
+
+			UE_LOG(LogTemp, Warning, TEXT("Queue Length : %d"), UnacknowledgedMoves.Num())
+		}
+
 		Server_SendMove(Move);
 
 		SimulateMove(Move); // Simulate Move Myself
@@ -84,6 +89,8 @@ void AGoKart::OnRep_ServerState()
 {
 	SetActorTransform(ServerState.Transform);
 	Velocity = ServerState.Velocity;
+
+	CreateAcknowledgeMoves(ServerState.LastMove);
 }
 
 // All Data Comming Throw The Move not Directly From The Actor
@@ -100,6 +107,30 @@ void AGoKart::SimulateMove(FGoKartMoves Move)
 
 	// Moving The Car
 	UpdateLocationFromVelocity(Move.DeltaTime);
+}
+
+void AGoKart::CreateAcknowledgeMoves(FGoKartMoves LastMove)
+{
+	TArray<FGoKartMoves>NewMoves;
+	for (const FGoKartMoves& Move : UnacknowledgedMoves)
+	{
+		if (Move.Time > LastMove.Time)
+		{
+			NewMoves.Add(Move);
+		}
+	}
+
+	UnacknowledgedMoves = NewMoves;
+}
+
+FGoKartMoves AGoKart::CreateMove(float DeltaTime)
+{
+	FGoKartMoves Move;
+	Move.DeltaTime = DeltaTime;
+	Move.SteeringThrow = SteeringThrow;
+	Move.Throttle = Throttle;
+	Move.Time = GetWorld()->GetGameState()->GetServerWorldTimeSeconds();
+	return Move;
 }
 
 FVector AGoKart::GetAirResistance()
@@ -133,7 +164,7 @@ void AGoKart::UpdateLocationFromVelocity(float DeltaTime)
 
 	AddActorWorldOffset(Translation, true, &HitResult);
 
-	UE_LOG(LogTemp, Warning, TEXT("Sped : %f"), Translation.Size())
+	UE_LOG(LogTemp, Error, TEXT("Sped : %f"), Translation.Size())
 	if (HitResult.IsValidBlockingHit())
 	{
 		Velocity = FVector::ZeroVector;

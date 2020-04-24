@@ -61,6 +61,10 @@ public:
 private:
 	void SimulateMove(FGoKartMoves Move);
 
+	void CreateAcknowledgeMoves(FGoKartMoves LastMove);
+
+	FGoKartMoves CreateMove(float DeltaTime);
+
 	FVector GetAirResistance();
 
 	FVector GetRollingResistance();
@@ -111,10 +115,13 @@ private:
 	// Local Velocity
 	FVector Velocity;
 
+	// Local
 	float Throttle;
 	float SteeringThrow;
 
 	// The Force Applied To The Car When The Throttle is Fully Down (Newton)
 	UPROPERTY(EditAnywhere)
 	float MaxDrivingForce = 10000;
+
+	TArray<FGoKartMoves> UnacknowledgedMoves;
 };
