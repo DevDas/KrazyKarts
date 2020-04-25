@@ -3,26 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GoKartMovementComponent.h"
 #include "GameFramework/Pawn.h"
 #include "GoKart.generated.h"
 
-USTRUCT()
-struct FGoKartMoves
-{
-	GENERATED_USTRUCT_BODY()
-
-	UPROPERTY()
-	float Throttle;
-
-	UPROPERTY()
-	float SteeringThrow;
-
-	UPROPERTY()
-	float DeltaTime;
-
-	UPROPERTY()
-	float Time; // Time At Which The Move Started
-};
 
 USTRUCT()
 struct FGoKartState
@@ -59,21 +43,7 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 private:
-	void SimulateMove(const FGoKartMoves& Move);
-
 	void ClearAcknowledgeMoves(FGoKartMoves LastMove);
-
-	FGoKartMoves CreateMove(float DeltaTime);
-
-	FVector GetAirResistance();
-
-	FVector GetRollingResistance();
-
-	void ApplyRotation(float DeltaTime, float SteeringToThrow);
-
-	void UpdateLocationFromVelocity(float DeltaTime);
-
-	//=========================================================================================
 
 	// All Properties Inside The Struct Are Now Replicated
 	UPROPERTY(ReplicatedUsing = OnRep_ServerState)
@@ -94,34 +64,8 @@ private:
 
 	bool Server_SendMove_Validate(FGoKartMoves Move);
 
-	//==========================================================================================
-
-	// The Mass Of The Car(kg)
-	UPROPERTY(EditAnywhere)
-	float Mass = 1000;
-
-	// Min Radius of the car Turning Circle at full lock(m)
-	UPROPERTY(EditAnywhere)
-	float MinTurningRadius = 10;
-
-	// Higher Means More Drag
-	UPROPERTY(EditAnywhere)
-	float DragCoefficient = 16;
-
-	// Higher Means More Rolling Resistance
-	UPROPERTY(EditAnywhere)
-	float RollingCoefficient = 0.015;
-
-	// Local Velocity
-	FVector Velocity;
-
-	// Local
-	float Throttle;
-	float SteeringThrow;
-
-	// The Force Applied To The Car When The Throttle is Fully Down (Newton)
-	UPROPERTY(EditAnywhere)
-	float MaxDrivingForce = 10000;
-
 	TArray<FGoKartMoves> UnacknowledgedMoves;
+
+	UPROPERTY(EditAnywhere)
+	UGoKartMovementComponent* MovementComponent;
 };
