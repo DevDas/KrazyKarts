@@ -59,9 +59,9 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 private:
-	void SimulateMove(FGoKartMoves Move);
+	void SimulateMove(const FGoKartMoves& Move);
 
-	void CreateAcknowledgeMoves(FGoKartMoves LastMove);
+	void ClearAcknowledgeMoves(FGoKartMoves LastMove);
 
 	FGoKartMoves CreateMove(float DeltaTime);
 

@@ -27,7 +27,7 @@ FString GetEnumText(ENetRole Role)
 // Sets default values
 AGoKart::AGoKart()
 {
- 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	bReplicates = true;
@@ -47,7 +47,7 @@ void AGoKart::BeginPlay()
 void AGoKart::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	
+
 	DOREPLIFETIME(AGoKart, ServerState); // ServerState Included Valocity And Transform And FGoKartMoves
 }
 
@@ -65,36 +65,45 @@ void AGoKart::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (IsLocallyControlled())
+	if (Role == ROLE_AutonomousProxy)
 	{
 		FGoKartMoves Move = CreateMove(DeltaTime);
-
-		if (!HasAuthority())
-		{
-			UnacknowledgedMoves.Add(Move);
-
-			UE_LOG(LogTemp, Warning, TEXT("Queue Length : %d"), UnacknowledgedMoves.Num())
-		}
-
-		Server_SendMove(Move);
-
 		SimulateMove(Move); // Simulate Move Myself
+		UnacknowledgedMoves.Add(Move);
+		Server_SendMove(Move);	
 	}
 
+	// We Are The Server And In Control Of The Pawn
+	if (Role == ROLE_Authority && GetRemoteRole() == ROLE_SimulatedProxy /*IsLocallyControlled()*/)
+	{
+		FGoKartMoves Move = CreateMove(DeltaTime);
+		Server_SendMove(Move);
+	}
+
+	if (Role == ROLE_SimulatedProxy)
+	{
+		SimulateMove(ServerState.LastMove);
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Queue length: %d"), UnacknowledgedMoves.Num())
 	DrawDebugString(GetWorld(), FVector(0, 0, 100), GetEnumText(Role), this, FColor::Red, DeltaTime);
 }
 
-// When HasAuthority Fails, Setting The Last Transform of Client
 void AGoKart::OnRep_ServerState()
 {
 	SetActorTransform(ServerState.Transform);
 	Velocity = ServerState.Velocity;
 
-	CreateAcknowledgeMoves(ServerState.LastMove);
+	ClearAcknowledgeMoves(ServerState.LastMove);
+
+	for (const FGoKartMoves& Move : UnacknowledgedMoves)
+	{
+		SimulateMove(Move);
+	}
 }
 
 // All Data Comming Throw The Move not Directly From The Actor
-void AGoKart::SimulateMove(FGoKartMoves Move)
+void AGoKart::SimulateMove(const FGoKartMoves& Move)
 {
 	FVector Force = GetActorForwardVector() * MaxDrivingForce * Move.Throttle;
 	Force += GetAirResistance();
@@ -109,17 +118,16 @@ void AGoKart::SimulateMove(FGoKartMoves Move)
 	UpdateLocationFromVelocity(Move.DeltaTime);
 }
 
-void AGoKart::CreateAcknowledgeMoves(FGoKartMoves LastMove)
+void AGoKart::ClearAcknowledgeMoves(FGoKartMoves LastMove)
 {
-	TArray<FGoKartMoves>NewMoves;
+	TArray<FGoKartMoves> NewMoves;
 	for (const FGoKartMoves& Move : UnacknowledgedMoves)
 	{
-		if (Move.Time > LastMove.Time)
+		if (Move.Time < LastMove.Time)
 		{
 			NewMoves.Add(Move);
 		}
 	}
-
 	UnacknowledgedMoves = NewMoves;
 }
 
@@ -138,7 +146,7 @@ FVector AGoKart::GetAirResistance()
 	return -Velocity.GetSafeNormal() * Velocity.SizeSquared() * DragCoefficient;
 }
 
-FVector AGoKart::GetRollingResistance() 
+FVector AGoKart::GetRollingResistance()
 {
 	float AccelerationDueToGravity = -GetWorld()->GetGravityZ() / 100;
 	float NormalForce = Mass * AccelerationDueToGravity;
@@ -165,6 +173,7 @@ void AGoKart::UpdateLocationFromVelocity(float DeltaTime)
 	AddActorWorldOffset(Translation, true, &HitResult);
 
 	UE_LOG(LogTemp, Error, TEXT("Sped : %f"), Translation.Size())
+	
 	if (HitResult.IsValidBlockingHit())
 	{
 		Velocity = FVector::ZeroVector;
@@ -185,7 +194,7 @@ void AGoKart::Server_SendMove_Implementation(FGoKartMoves Move)
 {
 	SimulateMove(Move);
 
-	ServerState.LastMove = Move;
+	ServerState.LastMove = Move;  // FGoKartMoves 
 	ServerState.Transform = GetActorTransform();
 	ServerState.Velocity = Velocity; // Local Velocity Is Now ServerState Velocity
 }
