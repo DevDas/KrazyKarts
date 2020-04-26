@@ -58,7 +58,7 @@ private:
 
 	void ApplyRotation(float DeltaTime, float SteeringToThrow);
 	void UpdateLocationFromVelocity(float DeltaTime);
-
+	
 	// The Mass Of The Car(kg)
 	UPROPERTY(EditAnywhere)
 	float Mass = 1000;

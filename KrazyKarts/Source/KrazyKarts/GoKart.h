@@ -3,24 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GoKartMovementComponent.h"
 #include "GameFramework/Pawn.h"
 #include "GoKart.generated.h"
-
-
-USTRUCT()
-struct FGoKartState
-{
-	GENERATED_USTRUCT_BODY()
-
-	UPROPERTY()
-	FTransform Transform;
-
-	UPROPERTY()
-	FVector Velocity;
-
-	FGoKartMoves LastMove;
-};
 
 UCLASS()
 class KRAZYKARTS_API AGoKart : public APawn
@@ -43,29 +27,14 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 private:
-	void ClearAcknowledgeMoves(FGoKartMoves LastMove);
-
-	// All Properties Inside The Struct Are Now Replicated
-	UPROPERTY(ReplicatedUsing = OnRep_ServerState)
-	FGoKartState ServerState;
-
-	UFUNCTION()
-	void OnRep_ServerState();
-
-	void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const;
-
+	
 	void MoveForward(float Value);
+
 	void MoveRight(float Value);
 
-	// RPC - Anything Client Can Do Server Is Watching
-	// Now This Gonna Be Executed On Server not On Client ***RPC***
-	UFUNCTION(Server, Reliable, WithValidation)
-	void Server_SendMove(FGoKartMoves Move);
+	UPROPERTY(VisibleAnywhere)
+	class UGoKartMovementComponent* MovementComponent;
 
-	bool Server_SendMove_Validate(FGoKartMoves Move);
-
-	TArray<FGoKartMoves> UnacknowledgedMoves;
-
-	UPROPERTY(EditAnywhere)
-	UGoKartMovementComponent* MovementComponent;
+	UPROPERTY(VisibleAnywhere)
+	class UGoKartMovementReplicator* MovementReplicator;
 };
