@@ -61,4 +61,6 @@ private:
 
 	UPROPERTY()
 	UGoKartMovementComponent* MovementComponent;
+
+	void UpdateServerState(const FGoKartMoves& Move);
 };

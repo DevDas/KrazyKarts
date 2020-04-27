@@ -21,6 +21,14 @@ void UGoKartMovementComponent::BeginPlay()
 void UGoKartMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	// GetOwner()->GetRemoteRole() == ROLE_SimulatedProxy Means Server
+	// GetOwnerRole() == ROLE_AutonomousProxy Means Client
+	if (GetOwnerRole() == ROLE_AutonomousProxy || GetOwner()->GetRemoteRole() == ROLE_SimulatedProxy)
+	{
+		LastMove = CreateMove(DeltaTime);
+		SimulateMove(LastMove); // Simulate Move Myself
+	}
 }
 
 // All Data Comming Throw The Move not Directly From The Actor // GetOwner()->

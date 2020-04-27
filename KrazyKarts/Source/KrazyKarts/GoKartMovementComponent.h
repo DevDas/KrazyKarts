@@ -41,8 +41,6 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	FGoKartMoves CreateMove(float DeltaTime);
-
 	void SimulateMove(const FGoKartMoves& Move);
 
 	FVector GetVelocity() { return Velocity; };
@@ -51,7 +49,10 @@ public:
 	void SetThrottle(float Val) { Throttle = Val; };
 	void SetSteeringThrow(float Val) { SteeringThrow = Val; };
 
+	FGoKartMoves GetLastMove() { return LastMove; };
+
 private:
+	FGoKartMoves CreateMove(float DeltaTime);
 
 	FVector GetAirResistance();
 	FVector GetRollingResistance();
@@ -84,5 +85,8 @@ private:
 
 	// Local
 	float Throttle;
-	float SteeringThrow;	
+	float SteeringThrow;
+
+	//  Local
+	FGoKartMoves LastMove;
 };
