@@ -41,12 +41,18 @@ public:
 private:
 	void ClearAcknowledgeMoves(FGoKartMoves LastMove);
 
+	void UpdateServerState(const FGoKartMoves& Move);
+
+	void ClientTick(float DeltaTime);
+
 	// All Properties Inside The Struct Are Now Replicated
 	UPROPERTY(ReplicatedUsing = OnRep_ServerState)
 	FGoKartState ServerState;
 
 	UFUNCTION()
 	void OnRep_ServerState();
+	void AutonomousProxy_OnRep_ServerState();
+	void SimulatedProxy_OnRep_ServerState();
 
 	void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const;
 
@@ -59,8 +65,10 @@ private:
 
 	TArray<FGoKartMoves> UnacknowledgedMoves;
 
+	float ClientTimeSinceUpdate;
+	float ClientTimeBetweenLastUpdates;
+	FVector ClientStartLocation;
+
 	UPROPERTY()
 	UGoKartMovementComponent* MovementComponent;
-
-	void UpdateServerState(const FGoKartMoves& Move);
 };
