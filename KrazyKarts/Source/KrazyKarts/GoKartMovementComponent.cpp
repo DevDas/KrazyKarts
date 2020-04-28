@@ -88,7 +88,7 @@ void UGoKartMovementComponent::UpdateLocationFromVelocity(float DeltaTime)
 
 	GetOwner()->AddActorWorldOffset(Translation, true, &HitResult);
 
-	UE_LOG(LogTemp, Error, TEXT("Sped : %f"), Translation.Size())
+	//UE_LOG(LogTemp, Error, TEXT("Sped : %f"), Translation.Size())
 
 	if (HitResult.IsValidBlockingHit())
 	{
