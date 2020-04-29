@@ -36,7 +36,7 @@ void UGoKartMovementReplicator::TickComponent(float DeltaTime, ELevelTick TickTy
 		UnacknowledgedMoves.Add(LastMove);
 		Server_SendMove(LastMove); // Telling THe Server That Client Is Moving
 
-		//UE_LOG(LogTemp, Warning, TEXT("Queue length: %d"), UnacknowledgedMoves.Num())
+		UE_LOG(LogTemp, Warning, TEXT("Queue length: %d"), UnacknowledgedMoves.Num())
 	}
 
 	// We Are The Server And In Control Of The Pawn (Server in client)
@@ -65,13 +65,24 @@ void UGoKartMovementReplicator::ClientTick(float DeltaTime)
 	ClientTimeSinceUpdate += DeltaTime;
 
 	if (ClientTimeBetweenLastUpdates < KINDA_SMALL_NUMBER) return;
+	if (MovementComponent == nullptr) return;
 
-	// Configuring Location
+	// Configuring Location 
 	FVector TargetLocation = ServerState.Transform.GetLocation();
 	float LerpRatio = ClientTimeSinceUpdate / ClientTimeBetweenLastUpdates;
 	FVector StartLocation = ClientStartTransform.GetLocation();
-	FVector NewLocation = FMath::Lerp(StartLocation, TargetLocation, LerpRatio);
+
+	// FMath::CubicInterp
+	float VelocityToDerivative = ClientTimeBetweenLastUpdates * 100; // meter to cm
+	FVector StartDerivative = StartVelocity * VelocityToDerivative;
+	FVector TargetDerivative = ServerState.Velocity * VelocityToDerivative;
+
+	FVector NewLocation = FMath::CubicInterp(StartLocation, StartDerivative, TargetLocation, TargetDerivative, LerpRatio);
 	GetOwner()->SetActorLocation(NewLocation);
+
+	FVector NewDerivative = FMath::CubicInterpDerivative(StartLocation, StartDerivative, TargetLocation, TargetDerivative, LerpRatio);
+	FVector NewVelocity = NewDerivative / VelocityToDerivative;
+	MovementComponent->SetVelocity(NewVelocity);
 
 	// Configuring Rotation
 	FQuat TargetRotation = ServerState.Transform.GetRotation();
@@ -121,10 +132,13 @@ void UGoKartMovementReplicator::AutonomousProxy_OnRep_ServerState()
 // All Simulated Proxy
 void UGoKartMovementReplicator::SimulatedProxy_OnRep_ServerState()
 {
+	if (MovementComponent == nullptr) return;
+
 	ClientTimeBetweenLastUpdates = ClientTimeSinceUpdate;
 	ClientTimeSinceUpdate = 0;
 
 	ClientStartTransform = GetOwner()->GetActorTransform();
+	StartVelocity = MovementComponent->GetVelocity();
 }
 
 void UGoKartMovementReplicator::ClearAcknowledgeMoves(FGoKartMoves LastMove)
