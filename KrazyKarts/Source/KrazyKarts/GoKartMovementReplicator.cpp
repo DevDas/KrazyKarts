@@ -4,6 +4,7 @@
 #include "GoKart.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/Actor.h"
+#include "Engine/World.h"
 
 // Sets default values for this component's properties
 UGoKartMovementReplicator::UGoKartMovementReplicator()
@@ -37,7 +38,7 @@ void UGoKartMovementReplicator::TickComponent(float DeltaTime, ELevelTick TickTy
 		UnacknowledgedMoves.Add(LastMove);
 		Server_SendMove(LastMove); // Telling THe Server That Client Is Moving
 
-		UE_LOG(LogTemp, Warning, TEXT("Queue length: %d"), UnacknowledgedMoves.Num())
+		//UE_LOG(LogTemp, Warning, TEXT("Queue length: %d"), UnacknowledgedMoves.Num())
 	}
 
 	// We Are The Server And In Control Of The Pawn (Server in client)
@@ -195,13 +196,20 @@ void UGoKartMovementReplicator::Server_SendMove_Implementation(FGoKartMoves Move
 {
 	if (MovementComponent == nullptr) return;
 
+	ClientSimulatedTime += Move.DeltaTime;
 	MovementComponent->SimulateMove(Move); // Tell The Server That The Client Is Moving
 	
 	UpdateServerState(Move); // Tell The 2nd Client That 1st Client Is Moving
 }
 
+// if False Client Will Remove From The Server
 bool UGoKartMovementReplicator::Server_SendMove_Validate(FGoKartMoves Move)
 {
-	//return FMath::Abs(Value) <= 1; // if False Client Will Remove From The Server
-	return true; // TODO Better validation
+	float ProposedTime = ClientSimulatedTime + Move.DeltaTime;
+	bool ClientNotRunningAhed = ProposedTime < GetWorld()->TimeSeconds;
+	if (!ClientNotRunningAhed && !Move.IsValid())
+	{
+		return false;
+	}
+	return true;
 }

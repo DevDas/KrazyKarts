@@ -92,6 +92,8 @@ private:
 	FTransform ClientStartTransform;
 	FVector StartVelocity;
 
+	float ClientSimulatedTime;
+
 	UPROPERTY()
 	UGoKartMovementComponent* MovementComponent;
 
