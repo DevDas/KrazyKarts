@@ -19,22 +19,22 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+		class UGoKartMovementComponent* MovementComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+		class UGoKartMovementReplicator* MovementReplicator;
+
 private:
-	
+
 	void MoveForward(float Value);
 
 	void MoveRight(float Value);
-
-	UPROPERTY(VisibleAnywhere)
-	class UGoKartMovementComponent* MovementComponent;
-
-	UPROPERTY(VisibleAnywhere)
-	class UGoKartMovementReplicator* MovementReplicator;
 };

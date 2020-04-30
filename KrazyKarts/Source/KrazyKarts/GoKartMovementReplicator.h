@@ -21,7 +21,7 @@ struct FGoKartState
 	FGoKartMoves LastMove;
 };
 
-struct FHermiteCubicSpine
+struct FHermiteCubicSpline
 {
 	FVector StartLocation, StartDerivative, TargetLocation, TargetDerivative;
 
@@ -61,10 +61,10 @@ private:
 	void ClientTick(float DeltaTime);
 
 	// Refactoring Struct
-	FHermiteCubicSpine CreateSpline();
+	FHermiteCubicSpline CreateSpline();
 	float VelocityToDerivative();
-	void InterpolateLocation(const FHermiteCubicSpine& Spline, float LerpRatio);
-	void InterpolateVelocity(const FHermiteCubicSpine& Spline, float LerpRatio);
+	void InterpolateLocation(const FHermiteCubicSpline& Spline, float LerpRatio);
+	void InterpolateVelocity(const FHermiteCubicSpline& Spline, float LerpRatio);
 	void InterpolateRotation(float LerpRatio);
 
 	// All Properties Inside The Struct Are Now Replicated
@@ -94,4 +94,10 @@ private:
 
 	UPROPERTY()
 	UGoKartMovementComponent* MovementComponent;
+
+	UPROPERTY()
+	USceneComponent* MeshOffsetRoot;
+
+	UFUNCTION(BlueprintCallable)
+	void SetMeshOffsetRoot(USceneComponent* Root) { MeshOffsetRoot = Root; };
 };
