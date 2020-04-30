@@ -21,6 +21,21 @@ struct FGoKartState
 	FGoKartMoves LastMove;
 };
 
+struct FHermiteCubicSpine
+{
+	FVector StartLocation, StartDerivative, TargetLocation, TargetDerivative;
+
+	FVector InterpolateLocaton(float LerpRatio) const
+	{
+		return FMath::CubicInterp(StartLocation, StartDerivative, TargetLocation, TargetDerivative, LerpRatio);
+	}
+
+	FVector InterpolateDerivative(float LerpRatio) const
+	{
+		return FMath::CubicInterpDerivative(StartLocation, StartDerivative, TargetLocation, TargetDerivative, LerpRatio);
+	}
+};
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class KRAZYKARTS_API UGoKartMovementReplicator : public UActorComponent
 {
@@ -44,6 +59,13 @@ private:
 	void UpdateServerState(const FGoKartMoves& Move);
 
 	void ClientTick(float DeltaTime);
+
+	// Refactoring Struct
+	FHermiteCubicSpine CreateSpline();
+	float VelocityToDerivative();
+	void InterpolateLocation(const FHermiteCubicSpine& Spline, float LerpRatio);
+	void InterpolateVelocity(const FHermiteCubicSpine& Spline, float LerpRatio);
+	void InterpolateRotation(float LerpRatio);
 
 	// All Properties Inside The Struct Are Now Replicated
 	UPROPERTY(ReplicatedUsing = OnRep_ServerState)
