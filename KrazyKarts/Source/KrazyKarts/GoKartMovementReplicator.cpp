@@ -38,7 +38,7 @@ void UGoKartMovementReplicator::TickComponent(float DeltaTime, ELevelTick TickTy
 		UnacknowledgedMoves.Add(LastMove);
 		Server_SendMove(LastMove); // Telling THe Server That Client Is Moving
 
-		//UE_LOG(LogTemp, Warning, TEXT("Queue length: %d"), UnacknowledgedMoves.Num())
+		UE_LOG(LogTemp, Error, TEXT("Queue length: %d"), UnacknowledgedMoves.Num())
 	}
 
 	// We Are The Server And In Control Of The Pawn (Server in client)
@@ -159,6 +159,8 @@ void UGoKartMovementReplicator::AutonomousProxy_OnRep_ServerState()
 	{
 		MovementComponent->SimulateMove(Move);
 	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Time : %f"), ServerState.LastMove.Time)
 }
 
 // All Simulated Proxy
@@ -184,7 +186,7 @@ void UGoKartMovementReplicator::ClearAcknowledgeMoves(FGoKartMoves LastMove)
 	TArray<FGoKartMoves> NewMoves;
 	for (const FGoKartMoves& Move : UnacknowledgedMoves)
 	{
-		if (Move.Time < LastMove.Time)
+		if (Move.Time > LastMove.Time)
 		{
 			NewMoves.Add(Move);
 		}
